@@ -5,12 +5,12 @@ const port = process.env.PORT || 5000;
 require('dotenv').config();
 
 // middleware
-const corsOptions = {
-    origin: '*',
-    credentials: true,
-    optionSuccessStatus: 200,
-  }
-  app.use(cors(corsOptions))
+// const corsOptions = {
+//     origin: '*',
+//     credentials: true,
+//     optionSuccessStatus: 200,
+//   }
+  app.use(cors())
   app.use(express.json())
 
 
@@ -29,8 +29,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db('artistryDB').collection('users')
+    const classCollection = client.db('artistryDB').collection('classes')
 
-    app.put('/', async(req, res) => {
+    app.put('/users/:email', async(req, res) => {
         const email = req.params.email
         const user = req.body
         const query = {email: email}
@@ -42,13 +43,19 @@ async function run() {
         res.send(result)
       })
 
+      app.post('/classes', async(req, res) =>{
+        const classes = req.body
+        console.log(classes)
+        const result = await classCollection.insertOne(classes)
+        res.send(result)
+      })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    
   }
 }
 run().catch(console.dir);
