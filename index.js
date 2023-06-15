@@ -1,20 +1,37 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 
 // middleware
-// const corsOptions = {
-//     origin: '*',
-//     credentials: true,
-//     optionSuccessStatus: 200,
-//   }
-  app.use(cors())
+const corsOptions = {
+    origin: '*',
+    credentials: true,
+    optionSuccessStatus: 200,
+  }
+  app.use(cors(corsOptions))
   app.use(express.json())
 
+  const verifyJWT = (req, res, next) =>{
+    const authorization = req.headers.authorization;
+    if(!authorization){
+      return res.status(401).send({error: true, message: 'unauthorized access'});
+    }
+      const token = authorization.split(' ')[1];
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+        if(err){
+          return res.status(401).send({error: true, message: 'unauthorized access'});
+        }
+        req.decoded = decoded;
+        next();
+      })
+    }
+  
+
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.jyvsljn.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -31,18 +48,15 @@ async function run() {
     const usersCollection = client.db('artistryDB').collection('users')
     const classCollection = client.db('artistryDB').collection('classes')
 
-    app.put('/users/:email', async(req, res) => {
-        const email = req.params.email
-        const user = req.body
-        const query = {email: email}
-        const options = {upsert: true}
-        const updateDoc = {
-            $set: user
-        }
-        const result = await usersCollection.updateOne(query, updateDoc, options)
-        res.send(result)
-      })
+    app.post('/jwt', (req, res)=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h'})
+      res.send({token}) 
+    })
 
+ 
+
+    //   add a class 
       app.post('/classes', async(req, res) =>{
         const classes = req.body
         console.log(classes)
@@ -50,7 +64,25 @@ async function run() {
         res.send(result)
       })
 
-
+    //   get all class 
+    app.get('/classes', async(req, res) =>{
+        const result = await classCollection.find().toArray()
+        res.send(result)
+      })
+      
+    // set class status approved
+    app.patch('/classes/approve/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        }
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+ 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
