@@ -54,6 +54,16 @@ async function run() {
       res.send({token}) 
     })
 
+    const verifyAdmin = async(req, res, next)=>{
+      const email = req.decoded.email;
+      const query = {email: email}
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'admin'){
+        return res.status(403).send({error: true, message: 'forbidden access'});
+      }
+      next();
+    }
+
  // user manegement
      // insert user 
      app.post('/users', async (req, res) => {
