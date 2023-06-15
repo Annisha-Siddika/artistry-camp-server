@@ -54,7 +54,21 @@ async function run() {
       res.send({token}) 
     })
 
- 
+ // user manegement
+     // insert user 
+     app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
 
     //   add a class 
       app.post('/classes', async(req, res) =>{
