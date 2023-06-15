@@ -151,6 +151,12 @@ async function run() {
       res.send(result)
     })
 
+    // get all instructors
+    app.get('/users/instructors', async(req,res) =>{
+      const result = await usersCollection.find({role: 'instructor'}).toArray();
+      res.send(result);
+    })
+
     //   get all class 
     app.get('/classes', async(req, res) =>{
         const result = await classCollection.find().toArray()
