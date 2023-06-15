@@ -79,6 +79,12 @@ async function run() {
       res.send(result);
     });
 
+    // get all users 
+    app.get('/users', verifyJWT, verifyAdmin, async(req, res) =>{
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
 
     //   add a class 
       app.post('/classes', async(req, res) =>{
