@@ -130,13 +130,7 @@ async function run() {
     })
 
 
-    //   add a class 
-      app.post('/classes', async(req, res) =>{
-        const classes = req.body
-        console.log(classes)
-        const result = await classCollection.insertOne(classes)
-        res.send(result)
-      })
+    
 
       // set instructor role 
     app.patch('/users/instructor/:id', async(req, res) =>{
@@ -157,6 +151,15 @@ async function run() {
       res.send(result);
     })
 
+    // class manegement 
+    //   add a class 
+    app.post('/classes', async(req, res) =>{
+      const classes = req.body
+      console.log(classes)
+      const result = await classCollection.insertOne(classes)
+      res.send(result)
+    })
+
     //   get all class 
     app.get('/classes', async(req, res) =>{
         const result = await classCollection.find().toArray()
@@ -170,6 +173,19 @@ async function run() {
       const updateDoc = {
         $set: {
           status: 'approved'
+        }
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result)
+    })
+
+    // set class status denied
+    app.patch('/classes/deny/:id', async(req, res) =>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: 'denied'
         }
       };
       const result = await classCollection.updateOne(filter, updateDoc);
