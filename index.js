@@ -101,6 +101,21 @@ async function run() {
       }
     });
 
+     // check instructor
+     app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+    
+      try {
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        const result = { instructor: user?.role === 'instructor' };
+        res.send(result);
+      } catch (error) {
+        console.error('Error occurred while querying the database:', error);
+        res.status(500).send({ error: 'Internal server error' });
+      }
+    });
+
 
     //   add a class 
       app.post('/classes', async(req, res) =>{
