@@ -47,6 +47,7 @@ async function run() {
   try {
     const usersCollection = client.db('artistryDB').collection('users')
     const classCollection = client.db('artistryDB').collection('classes')
+    const selectedClassCollection = client.db('artistryDB').collection('selectedClasses')
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -128,9 +129,6 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
-
-
-
 
     // set instructor role 
     app.patch('/users/instructor/:id', async (req, res) => {
@@ -219,6 +217,47 @@ async function run() {
         res.status(500).json({ error: 'Failed to update class feedback' });
       }
     });
+
+    // get approved classes 
+    app.get('/classes/approve', async (req, res) => {
+      console.log('approve')
+      try {
+        const filter =  { status: 'approved' };
+        const classes = await classCollection.find(filter).toArray();
+        res.json(classes);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch classes' });
+      }
+    });
+
+    // insert selected classes 
+    app.post('/selected', async (req, res) => {
+      const classes = req.body;
+      const result = await selectedClassCollection.insertOne(classes);
+      res.send(result);
+    })
+
+    // get selected classes 
+    app.get('/selected', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden access' })
+      }
+
+      const query = { email: email };
+      const result = await selectedClassCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    
+    
     
     
 
